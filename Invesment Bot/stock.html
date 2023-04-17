@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Stock Chart - My Investment Website</title>
+	<link rel="stylesheet" type="text/css" href="stock.css">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+	<div class="container">
+		<h2>Here's a live graph of this stock</h2>
+		<button class="btn" onclick="window.location.href='home.html'">Back to Home</button>
+		<canvas id="stock-chart" width="400" height="160"></canvas>
+		<h2 id="currentPrice"> Price per stock:</h2>
+	</div>
+
+	<script>
+		// Extract the stock symbol from the URL
+		const urlParams = new URLSearchParams(window.location.search);
+		const symbol = urlParams.get('symbol');
+
+		// Replace YOUR_API_KEY with your actual Alpha Vantage API key
+		const apiKey = 'YOUR_API_KEY';
+		const apiUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${symbol}&apikey=${apiKey}`;
+
+		// Retrieve data from the API
+		fetch(apiUrl)
+		.then(response => response.json())
+		.then(data => {
+			const times = Object.keys(data['Time Series (Daily)']);
+			const formattedTimes = times.map(time => new Date(time).toLocaleString('en-US', {
+				month: '2-digit',
+				day: '2-digit',
+				year: 'numeric',
+				hour: 'numeric',
+				minute: 'numeric',
+				hour12: true
+			}));
+			const prices = times.map(time => data['Time Series (Daily)'][time]['4. close']).reverse();
+			//Troubleshooting :(
+			console.log(prices);
+			console.log("Data set: " + prices.length + " points");
+			console.log("Current price " +prices[99]) //Current price 
+			console.log(times)
+
+			const currentPrice = prices[99];
+			document.getElementById('currentPrice').textContent = "Price per stock: $" +currentPrice;
+			// Plot the data on the graph
+			const ctx = document.getElementById('stock-chart').getContext('2d');
+			new Chart(ctx, {
+				type: 'line',
+				data: {
+					labels: formattedTimes.reverse(),
+					datasets: [{
+						label: `${symbol} stock price`,
+						data: prices,
+						backgroundColor: 'green',
+						pointBackgroundColor: 'white',
+						borderColor: 'white',
+						borderWidth: 1.5,
+						pointRadius: 1.5,
+						fill: true ,
+						pointHoverRadius: 5
+					}]
+				},
+				options: {
+					scales: {
+						y: {
+							beginAtZero: false
+						}
+					}
+				}
+			});
+		});
+	</script>
+</body>
+</html>
